@@ -48,7 +48,15 @@ def run_download(job_id, url, format_choice, format_id):
     job = jobs[job_id]
     out_template = os.path.join(DOWNLOAD_DIR, f"{job_id}.%(ext)s")
 
-    cmd = [sys.executable, "-m", "yt_dlp", "--no-playlist", "-o", out_template]
+    cmd = [sys.executable, "-m", "yt_dlp", "--no-playlist"]
+    cookies_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cookies.txt")
+    if not os.path.exists(cookies_path):
+        cookies_path = os.path.join(DOWNLOAD_DIR, "cookies.txt")
+    
+    if os.path.exists(cookies_path):
+        cmd += ["--cookies", cookies_path]
+
+    cmd += ["-o", out_template]
 
     if format_choice == "audio":
         cmd += ["-x", "--audio-format", "mp3"]
@@ -116,7 +124,14 @@ def get_info():
     if not url:
         return jsonify({"error": "No URL provided"}), 400
 
-    cmd = [sys.executable, "-m", "yt_dlp", "--no-playlist", "-j", url]
+    cmd = [sys.executable, "-m", "yt_dlp", "--no-playlist"]
+    cookies_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cookies.txt")
+    if not os.path.exists(cookies_path):
+        cookies_path = os.path.join(DOWNLOAD_DIR, "cookies.txt")
+        
+    if os.path.exists(cookies_path):
+        cmd += ["--cookies", cookies_path]
+    cmd += ["-j", url]
     print(f"Executing: {' '.join(cmd)}")
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
