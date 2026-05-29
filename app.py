@@ -64,7 +64,7 @@ def run_download(job_id, url, format_choice, format_id):
     job = jobs[job_id]
     out_template = os.path.join(DOWNLOAD_DIR, f"{job_id}.%(ext)s")
 
-    cmd = [sys.executable, "-m", "yt_dlp", "--no-playlist"]
+    cmd = [sys.executable, "-m", "yt_dlp", "--no-playlist", "--remote-components", "ejs:github"]
     cookies_path = get_cookies_path()
     if cookies_path:
         print(f"Using cookies file: {cookies_path}")
@@ -140,7 +140,7 @@ def get_info():
     if not url:
         return jsonify({"error": "No URL provided"}), 400
 
-    cmd = [sys.executable, "-m", "yt_dlp", "--no-playlist"]
+    cmd = [sys.executable, "-m", "yt_dlp", "--no-playlist", "--remote-components", "ejs:github"]
     cookies_path = get_cookies_path()
     if cookies_path:
         print(f"Using cookies file: {cookies_path}")
