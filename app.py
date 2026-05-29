@@ -18,6 +18,22 @@ os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 jobs = {}
 
 
+def get_cookies_path():
+    # 1. Check root of application (/app/cookies.txt)
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cookies.txt")
+    if os.path.exists(path):
+        return path
+    # 2. Check downloads directory under app (/app/downloads/cookies.txt)
+    path = os.path.join(DOWNLOAD_DIR, "cookies.txt")
+    if os.path.exists(path):
+        return path
+    # 3. Check direct root mount (/downloads/cookies.txt)
+    path = "/downloads/cookies.txt"
+    if os.path.exists(path):
+        return path
+    return None
+
+
 def cleanup_old_downloads():
     """Limpa downloads antigos em segundo plano a cada 10 minutos."""
     while True:
@@ -49,12 +65,12 @@ def run_download(job_id, url, format_choice, format_id):
     out_template = os.path.join(DOWNLOAD_DIR, f"{job_id}.%(ext)s")
 
     cmd = [sys.executable, "-m", "yt_dlp", "--no-playlist"]
-    cookies_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cookies.txt")
-    if not os.path.exists(cookies_path):
-        cookies_path = os.path.join(DOWNLOAD_DIR, "cookies.txt")
-    
-    if os.path.exists(cookies_path):
+    cookies_path = get_cookies_path()
+    if cookies_path:
+        print(f"Using cookies file: {cookies_path}")
         cmd += ["--cookies", cookies_path]
+    else:
+        print("No cookies file found")
 
     cmd += ["-o", out_template]
 
@@ -125,12 +141,12 @@ def get_info():
         return jsonify({"error": "No URL provided"}), 400
 
     cmd = [sys.executable, "-m", "yt_dlp", "--no-playlist"]
-    cookies_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cookies.txt")
-    if not os.path.exists(cookies_path):
-        cookies_path = os.path.join(DOWNLOAD_DIR, "cookies.txt")
-        
-    if os.path.exists(cookies_path):
+    cookies_path = get_cookies_path()
+    if cookies_path:
+        print(f"Using cookies file: {cookies_path}")
         cmd += ["--cookies", cookies_path]
+    else:
+        print("No cookies file found")
     cmd += ["-j", url]
     print(f"Executing: {' '.join(cmd)}")
     try:
