@@ -21,20 +21,47 @@ https://github.com/user-attachments/assets/419d3e50-c933-444b-8cab-a9724986ba05
 
 ## Quick Start
 
+### Docker (recommended)
+
 ```bash
-brew install yt-dlp ffmpeg    # or apt install ffmpeg && pip install yt-dlp
+docker build -t reclip . && docker run -p 8899:8899 reclip
+```
+
+### Manual (Linux / macOS)
+
+```bash
+# Install dependencies
+brew install yt-dlp ffmpeg         # macOS
+# sudo apt install ffmpeg          # Linux (Debian/Ubuntu)
+
 git clone https://github.com/averygan/reclip.git
 cd reclip
 ./reclip.sh
 ```
 
-Open **http://localhost:8899**.
-
-Or with Docker:
+### Manual (Windows / any OS with venv)
 
 ```bash
-docker build -t reclip . && docker run -p 8899:8899 reclip
+# 1. Clone the repo
+git clone https://github.com/averygan/reclip.git
+cd reclip
+
+# 2. Create and activate a virtual environment
+python -m venv venv
+venv\Scripts\activate          # Windows
+# source venv/bin/activate     # Linux / macOS
+
+# 3. Install Python dependencies
+pip install -r requirements.txt
+
+# 4. (Optional) Download ffmpeg for Windows
+python download_ffmpeg.py
+
+# 5. Start the server
+python app.py
 ```
+
+Open **http://localhost:8899**.
 
 ## Usage
 

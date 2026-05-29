@@ -1,10 +1,15 @@
 import os
+import sys
 import uuid
 import glob
 import json
 import subprocess
 import threading
+import time
 from flask import Flask, request, jsonify, send_file, render_template
+
+# Add current directory to PATH so yt-dlp can find ffmpeg.exe and ffprobe.exe
+os.environ["PATH"] += os.pathsep + os.path.dirname(os.path.abspath(__file__))
 
 app = Flask(__name__)
 DOWNLOAD_DIR = os.path.join(os.path.dirname(__file__), "downloads")
@@ -13,11 +18,37 @@ os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 jobs = {}
 
 
+def cleanup_old_downloads():
+    """Limpa downloads antigos em segundo plano a cada 10 minutos."""
+    while True:
+        try:
+            now = time.time()
+            cutoff = now - 3600  # 1 hora
+            files = glob.glob(os.path.join(DOWNLOAD_DIR, "*"))
+            for f in files:
+                if os.path.isfile(f):
+                    if os.path.getmtime(f) < cutoff:
+                        try:
+                            os.remove(f)
+                            print(f"Cleaned up old download file: {f}")
+                        except OSError as e:
+                            print(f"Error deleting file {f}: {e}")
+        except Exception as e:
+            print(f"Error in cleanup thread: {e}")
+        time.sleep(600)  # Executa a cada 10 minutos
+
+
+# Inicia a thread de limpeza
+cleanup_thread = threading.Thread(target=cleanup_old_downloads, daemon=True)
+cleanup_thread.start()
+
+
+
 def run_download(job_id, url, format_choice, format_id):
     job = jobs[job_id]
     out_template = os.path.join(DOWNLOAD_DIR, f"{job_id}.%(ext)s")
 
-    cmd = ["yt-dlp", "--no-playlist", "-o", out_template]
+    cmd = [sys.executable, "-m", "yt_dlp", "--no-playlist", "-o", out_template]
 
     if format_choice == "audio":
         cmd += ["-x", "--audio-format", "mp3"]
@@ -85,10 +116,12 @@ def get_info():
     if not url:
         return jsonify({"error": "No URL provided"}), 400
 
-    cmd = ["yt-dlp", "--no-playlist", "-j", url]
+    cmd = [sys.executable, "-m", "yt_dlp", "--no-playlist", "-j", url]
+    print(f"Executing: {' '.join(cmd)}")
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
         if result.returncode != 0:
+            print(f"Error: {result.stderr}")
             return jsonify({"error": result.stderr.strip().split("\n")[-1]}), 400
 
         info = json.loads(result.stdout)
