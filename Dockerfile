@@ -12,4 +12,5 @@ COPY . .
 
 EXPOSE 8899
 ENV HOST=0.0.0.0
+ENV PYTHONUNBUFFERED=1
 CMD ["python", "app.py"]
